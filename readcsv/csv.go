@@ -9,11 +9,6 @@ import (
 	"strings"
 )
 
-// DataRequest ...
-type DataRequest struct {
-	Get string `json:"get"`
-}
-
 // Covid ...
 type Covid struct {
 	CumulativeTestPositive  string `json:"cumulative_test_positive"`
@@ -57,7 +52,6 @@ func Loadcsvfile(str string) []Covid {
 			Admitted:                record[6],
 		}
 		table = append(table, c)
-		//fmt.Println(record)
 	}
 	return table
 }
@@ -80,17 +74,7 @@ func Search(table []Covid, find string) []byte {
 					Admitted:                lim.Admitted},
 			}
 			searchedData = append(searchedData, c...)
-			////////////////////////////////////////////////////////////////////////////////
-			// jsonData, err := json.MarshalIndent(c, "", "")
-			// if err != nil {
-			// 	log.Println(err)
-			// }
-			// fmt.Print(string(jsonData))
-			// fmt.Println(len(a))
-			///////////////////////////////////////////////////////////////////////////////
-			// data, _ := json.Marshal([]*Covid{c})
-			// fmt.Println(string(data))
-			///////////////////////////////////////////////////////////////////////////////
+
 		}
 	}
 	response, err := json.MarshalIndent(searchedData, "", "")
@@ -99,8 +83,3 @@ func Search(table []Covid, find string) []byte {
 	}
 	return response
 }
-
-// func main() {
-// 	var arr = Loadcsvfile("covid_data.csv")
-// 	Search(arr, "ict")
-// }

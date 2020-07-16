@@ -24,12 +24,12 @@ func handleConnection(connection net.Conn) {
 
 	for {
 		cmdline := make([]byte, (1024 * 4))
-		n, err := connection.Read(cmdline)
-		if n == 0 || err != nil {
+		query, err := connection.Read(cmdline)
+		if query == 0 || err != nil {
 			log.Println("connection read error", err)
 			return
 		}
-		cmd, param, param2 := parsecommand(string(cmdline[0:n]))
+		cmd, param, param2 := parsecommand(string(cmdline[0:query]))
 
 		if cmd == "query" && param == "date" || param == "region" {
 			result := csv.Search(data, param2)
@@ -83,7 +83,7 @@ func main() {
 			continue
 		}
 		log.Println("Connected to ", connection.RemoteAddr())
-		log.Println("<Usage: {query: {region: Sindh}} OR {query: {date: 3/11/2020}} >")
+		log.Println("<Usage: {query: {region: Sindh}} OR {query: {date: 3/11/2020}}>")
 		go handleConnection(connection)
 	}
 }
