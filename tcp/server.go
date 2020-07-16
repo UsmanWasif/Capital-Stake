@@ -1,13 +1,13 @@
 package main
 
 import (
-	"encoding/json"
 	"flag"
 	"fmt"
 	"log"
 	"net"
 	"os"
 	csv "readcsv"
+	"strings"
 )
 
 var (
@@ -23,23 +23,39 @@ func handleConnection(connection net.Conn) {
 	}()
 
 	for {
-		dec := json.NewDecoder(connection)
-		var req csv.DataRequest
-		err := dec.Decode(&req)
-		if err != nil {
-			fmt.Println("network error:", err)
+		cmdline := make([]byte, (1024 * 4))
+		n, err := connection.Read(cmdline)
+		if n == 0 || err != nil {
+			log.Println("connection read error", err)
 			return
 		}
-		result := csv.Search(data, req.Get)
+		cmd, param, param2 := parsecommand(string(cmdline[0:n]))
 
-		enc := json.NewEncoder(connection)
-		error := enc.Encode(&result)
-		if error != nil {
-			fmt.Println("failed to send response:", error)
-			return
-
+		if cmd == "query" && param == "date" || param == "region" {
+			result := csv.Search(data, param2)
+			for _, lim := range result {
+				_, err := connection.Write([]byte(
+					fmt.Sprintf(string(lim)),
+				))
+				if err != nil {
+					log.Println("failed to write response", err)
+					return
+				}
+			}
+		} else {
+			log.Println("trimspace error")
 		}
 	}
+}
+func parsecommand(cmdline string) (cmd, param, param2 string) {
+	parts := strings.Split(cmdline, ":")
+	res1 := strings.TrimSpace(parts[0])
+	res2 := strings.TrimSpace(parts[1])
+	res3 := strings.TrimSpace(parts[2])
+	cmd = strings.TrimLeft(res1, "{")
+	param = strings.TrimLeft(res2, "{")
+	param2 = strings.TrimRight(res3, " }} ")
+	return
 }
 
 func main() {
@@ -67,6 +83,7 @@ func main() {
 			continue
 		}
 		log.Println("Connected to ", connection.RemoteAddr())
+		log.Println("<Usage: {query: {region: Sindh}} OR {query: {date: 3/11/2020}} >")
 		go handleConnection(connection)
 	}
 }
